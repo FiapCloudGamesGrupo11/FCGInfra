@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+
+spec:
+  serviceName: db
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: db
+
+  template:
+    metadata:
+      labels:
+        app: db
+
+    spec:
+      containers:
+      - name: db
+
+        image: mcr.microsoft.com/mssql/server:2022-latest
+
+        ports:
+        - containerPort: 1433
+
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+
+        - name: MSSQL_PID
+          value: "Developer"
+
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: SA_PASSWORD
+
+        volumeMounts:
+        - name: db
+          mountPath: /var/opt/mssql
+
+  volumeClaimTemplates:
+
+  - metadata:
+      name: db
+
+    spec:
+      accessModes:
+      - ReadWriteOnce
+
+      resources:
+        requests:
+          storage: 10Gi
