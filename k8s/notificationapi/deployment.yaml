@@ -23,9 +23,9 @@ spec:
 
         envFrom:
           - configMapRef:
-              name: notificationapi-config
+              name: configmapcommon
           - secretRef:
-              name: notificationapi-secret
+              name: secretfcg
 
         ports:
         - containerPort: 5001
