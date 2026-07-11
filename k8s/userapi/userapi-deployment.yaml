@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-api
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: user-api
+  
+  template:
+    metadata:
+      labels:
+        app: user-api
+  
+    spec:
+      containers:
+      - name: user-api
+        image: userapi2:latest
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8070
+
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+        envFrom:
+        - configMapRef: 
+            name: configmapcommon
+        - secretRef:
+              name: secretfcg
+
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://+:8070
+  

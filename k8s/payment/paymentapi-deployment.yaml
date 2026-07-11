@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: payments-api
+  
+  template:
+    metadata:
+      labels:
+        app: payments-api
+  
+    spec:
+      containers:
+      - name: payments-api
+        image: paymentsapi5:latest
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8090
+
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+        envFrom:
+        - configMapRef:
+            name: configmapcommon            
+        - secretRef:
+              name: secretfcg
+
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://+:8090
+
+
+

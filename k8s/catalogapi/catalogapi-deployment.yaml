@@ -20,14 +20,7 @@ spec:
       - name: catalog-api
         image: catalogapi:latest
         imagePullPolicy: IfNotPresent
-
-        envFrom:
-          - configMapRef:
-              name: configmapcommon
-        
-          - secretRef:
-              name: secretfcg
-
+    
         ports:
         - containerPort: 8080
 
@@ -54,6 +47,13 @@ spec:
           periodSeconds: 10
           failureThreshold: 5
           initialDelaySeconds: 3
+
+        envFrom:
+        - configMapRef:
+            name: configmapcommon  
+
+        - secretRef:
+              name: secretfcg
 
         env:
         - name: ASPNETCORE_URLS
