@@ -433,5 +433,16 @@ kubectl get events
 
 ---
 
+## Autores
+
+Integrantes:
+  --Anderson Alves Koshimizu - RM371858 (Anderson Koshimizu)
+  --André Felipe da Costa - RM373980 (Fe-costa)
+  --Esterffeson José Duarte de Abreu - RM372754 (EsterffesonDuarte)
+  --Esther Novais Pinheiro Silva - RM373639  (Esther Novais)
+  --Jacqueline Nascimento Albuquerque - RM366275  (Jacqueline)
+
+---
+
 **Última atualização**: 2026-07-12  
 **Versão**: 1.0.0  
