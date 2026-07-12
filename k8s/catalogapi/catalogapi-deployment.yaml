@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: catalog-api
-        image: catalogapi:latest
+        image: fcgcatalogapi:latest
         imagePullPolicy: IfNotPresent
     
         ports:

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: notification-api
-        image: notificationapi2:latest
+        image: fcgnotificationapi:latest
         imagePullPolicy: IfNotPresent
 
         ports:

@@ -14,6 +14,7 @@ data:
   # Filas específicas
   RabbitMQ__OrderPlacedQueue: "order-placed"
   RabbitMQ__PaymentProcessedQueue: "catalog-payment-processed"
+  RabbitMQ__NotificationPaymentProcessedQueue: "notification-payment-processed"
   RabbitMQ__UserCreatedQueue: "user-created"
   CatalogAPI__BaseUrl: "http://catalog-api:8080"
 
