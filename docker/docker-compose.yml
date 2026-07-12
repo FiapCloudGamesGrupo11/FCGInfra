@@ -37,7 +37,7 @@ services:
     build:
       context: ./FCGCatalog
       dockerfile: Dockerfile
-    image: fiapcloudgames:latest
+    image: fcgcatalogapi:latest
     container_name: catalogapi
     depends_on:
       db:
@@ -58,7 +58,7 @@ services:
     build:
       context: ./FCGUser
       dockerfile: Dockerfile
-    image: userapi:latest
+    image: fcguserapi:latest
     container_name: fcg-userapi
     depends_on:
       db:
@@ -82,7 +82,7 @@ services:
     build:
       context: ./FCGPayment
       dockerfile: Dockerfile
-    image: paymentsapi:latest
+    image: fcgpaymentsapi:latest
     container_name: apipayments
     depends_on:
       rabbitmq:
@@ -100,7 +100,7 @@ services:
     build:
       context: ./FCGNotification
       dockerfile: Dockerfile
-    image: notificationapi:latest
+    image: fcgnotificationapi:latest
     container_name: notifications-api
     depends_on:
       rabbitmq:
