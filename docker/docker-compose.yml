@@ -92,8 +92,9 @@ services:
       - "8091:8091"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      RabbitMQ__Url: rabbitmq
-      RabbitMQ__User: guest
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: guest
       RabbitMQ__Password: guest
 
   notifications-api:
@@ -113,5 +114,6 @@ services:
       RabbitMQ__Port: "5672"
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      RabbitMQ__UserCreatedQueueName: user-created
-      RabbitMQ__PaymentProcessedQueueName: notification-payment-processed
+      RabbitMQ__UserCreatedQueue: user-created
+      RabbitMQ__PaymentProcessedQueue: catalog-payment-processed
+      RabbitMQ__NotificationPaymentProcessedQueue: notification-payment-processed
