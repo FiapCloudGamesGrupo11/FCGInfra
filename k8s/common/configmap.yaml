@@ -5,12 +5,6 @@ metadata:
 data:
   ASPNETCORE_ENVIRONMENT: "Development"
 
-  # RabbitMQ configs comuns
-  RabbitMQ__Host: "rabbitmq"
-  RabbitMQ__Port: "5672"
-  RabbitMQ__Username: "guest"
-  RabbitMQ__Password: "guest"
-
   # Filas específicas
   RabbitMQ__OrderPlacedQueue: "order-placed"
   RabbitMQ__PaymentProcessedQueue: "catalog-payment-processed"
