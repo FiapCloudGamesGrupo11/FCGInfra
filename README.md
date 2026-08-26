@@ -9,10 +9,6 @@ O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **
 
 Este repositório não contém código de aplicação, mas sim toda a orquestração, configuração e infraestrutura que conecta os microsserviços (FCGUser, FCGCatalog, FCGPayment, FCGNotification).
 
-No ambiente Docker Compose, o Kong API Gateway é a única entrada HTTP para UserAPI e CatalogAPI. As APIs permanecem acessíveis apenas pela rede interna do Compose.
-
-> Para configurar, executar e testar o Gateway do zero, consulte o [guia completo do Kong](docker/kong/README.md).
-
 ---
 
 ## Objetivo
@@ -66,10 +62,7 @@ Centralizar e padronizar:
 ```
 FCGInfra/
 ├── docker/
-│   ├── docker-compose.yml          # Orquestração para desenvolvimento
-│   └── kong/
-│       ├── kong.yml                # Serviços, rotas e políticas do Gateway
-│       └── README.md               # Guia de uso e validação do Gateway
+│   └── docker-compose.yml          # Orquestração para desenvolvimento
 ├── k8s/
 │   ├── apply-all.ps1               # Script para aplicar todos os manifests
 │   ├── common/
@@ -128,15 +121,6 @@ cd FCGInfra/docker
 docker-compose up -d
 ```
 
-Com Docker Compose v2, prefira:
-
-```powershell
-docker compose config --quiet
-docker compose up -d --build
-```
-
-Na primeira execução, o download das imagens e o build dos microsserviços podem demorar. Aguarde o retorno do prompt antes de consultar os containers.
-
 4. **Verifique se todos os containers estão em execução**:
 
 ```bash
@@ -165,28 +149,14 @@ docker-compose down
 
 ##  Acessar os Serviços Localmente
 
-### API Gateway
+### APIs dos Microsserviços
 
-| Componente | URL | Finalidade |
-|------------|-----|------------|
-| Kong Proxy | http://localhost:8000 | Entrada para UserAPI e CatalogAPI |
-| Kong Admin API | http://localhost:8001 | Administração local e diagnóstico |
-| Swagger UserAPI | http://user.localhost:8000/swagger | Testes da API de usuários pelo Gateway |
-| Swagger CatalogAPI | http://catalog.localhost:8000/swagger | Testes do catálogo pelo Gateway |
-
-As portas HTTP dos microsserviços não são publicadas no host. Consulte `docker/kong/README.md` para as rotas públicas, rotas protegidas e exemplos de chamadas JWT.
-
-### Validação rápida do Gateway
-
-```powershell
-# Deve falhar: UserAPI não está publicada diretamente
-curl.exe -i http://localhost:8070/api/User/GetAll
-
-# Deve retornar 401 pelo Kong
-curl.exe -i http://localhost:8000/api/User/GetAll
-```
-
-Para o roteiro completo de Swagger, criação de Admin, testes `401`/`403`/`200` e diagnóstico, consulte o [guia do Kong](docker/kong/README.md).
+| Microsserviço | URL | Swagger/Docs |
+|---------------|-----|--------------|
+| FCGCatalog | http://localhost:8080 | http://localhost:8080/swagger |
+| FCGUser | http://localhost:8070 | http://localhost:8070/swagger |
+| FCGPayment | http://localhost:8090 | http://localhost:8090/swagger |
+| FCGNotification | http://localhost:5001 | http://localhost:5001/swagger |
 
 ### Ferramentas de Infraestrutura
 
