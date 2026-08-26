@@ -35,18 +35,19 @@ services:
 
   catalogapi:
     build:
-      context: ./FCGCatalog
+      context: ../../FCGCatalog
       dockerfile: Dockerfile
-    image: fcgcatalogapi:latest
+    image: fiapcloudgames:latest
     container_name: catalogapi
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=Your_strong!Passw0rd;TrustServerCertificate=True;"
       RabbitMq__Host: rabbitmq
       RabbitMq__User: guest
@@ -56,17 +57,17 @@ services:
 
   userapi:
     build:
-      context: ./FCGUser
+      context: ../../FCGUser
       dockerfile: Dockerfile
-    image: fcguserapi:latest
-    container_name: fcg-userapi
+    image: userapi:latest
+    container_name: userapi
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8070:8070"
+    expose:
+      - "8070"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8070
@@ -80,16 +81,16 @@ services:
 
   paymentsapi:
     build:
-      context: ./FCGPayment
+      context: ../../FCGPayment
       dockerfile: Dockerfile
-    image: fcgpaymentsapi:latest
+    image: paymentsapi:latest
     container_name: apipayments
     depends_on:
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8090:8090"
-      - "8091:8091"
+    expose:
+      - "8090"
+      - "8091"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       RabbitMQ__Host: rabbitmq
@@ -99,15 +100,15 @@ services:
 
   notifications-api:
     build:
-      context: ./FCGNotification
+      context: ../../FCGNotification
       dockerfile: Dockerfile
-    image: fcgnotificationapi:latest
+    image: notificationapi:latest
     container_name: notifications-api
     depends_on:
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "5001:8080"
+    expose:
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       RabbitMQ__Host: rabbitmq
@@ -117,3 +118,29 @@ services:
       RabbitMQ__UserCreatedQueue: user-created
       RabbitMQ__PaymentProcessedQueue: catalog-payment-processed
       RabbitMQ__NotificationPaymentProcessedQueue: notification-payment-processed
+
+  kong:
+    image: kong:3.9
+    container_name: kong-gateway
+    depends_on:
+      - userapi
+      - catalogapi
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong/kong.yml:/kong/declarative/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "127.0.0.1:8001:8001"
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
