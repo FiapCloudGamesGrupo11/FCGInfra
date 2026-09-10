@@ -23,6 +23,10 @@ kubectl apply -f notificationapi/notificationapi-service.yaml
 kubectl apply -f rabbitmq/rabbitmq-deployment.yaml
 kubectl apply -f rabbitmq/rabbitmq-service.yaml
 
+# MongoDB
+kubectl apply -f mongo/mongo-deployment.yaml
+kubectl apply -f mongo/mongo-service.yaml
+
 # SQL Server
 kubectl apply -f sqlserver/sqlserver-deployment.yaml
 kubectl apply -f sqlserver/sqlserver-service.yaml

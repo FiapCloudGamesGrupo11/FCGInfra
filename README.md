@@ -80,6 +80,9 @@ FCGInfra/
 │   ├── rabbitmq/
 │   │   ├── rabbitmq-deployment.yaml
 │   │   └── rabbitmq-service.yaml
+│   ├── mongo/
+│   │   ├── mongo-deployment.yaml
+│   │   └── mongo-service.yaml
 │   ├── userapi/
 │   │   ├── userapi-deployment.yaml
 │   │   └── userapi-service.yaml
