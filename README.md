@@ -43,13 +43,12 @@ Centralizar e padronizar:
 │         └─────────────────┼──────────────────┘                  │
 │                           │                                     │
 │  ┌────────────────────────┴────────────────────────┐            │
-│  │     FCGNotification API (Port 5001)             │            │
+│  │ FCGNotification Lambda (LocalStack: 4566)       │            │
 │  └────────────────────────┬────────────────────────┘            │
 │                           │                                     │
-│         ┌─────────────────┴─────────────────┐                  │
-│         │       Message Bus (RabbitMQ)      │                  │
-│         │  (AMQP: 5672, Management: 15672) │                  │
-│         └─────────────────┬─────────────────┘                  │
+│  ┌────────────────────────┴────────────────────────┐            │
+│  │ SQS (notificações) + RabbitMQ (demais fluxos)   │            │
+│  └────────────────────────┬────────────────────────┘            │
 │                           │                                     │
 │         ┌─────────────────┴─────────────────┐                  │
 │         │   Database (SQL Server 2022)      │                  │
@@ -105,7 +104,7 @@ FCGInfra/
 - Docker Desktop instalado e em execução
 - Docker Compose (incluído no Docker Desktop)
 - ~8GB de memória disponível
-- Acesso às portas: 1433, 5672, 15672, 8070, 8080, 8090, 8091, 5001
+- Acesso às portas: 1433, 4566, 5672, 8000, 8001 e 15672
 
 ### Passos para Executar
 
@@ -152,7 +151,8 @@ rabbitmq          Up (healthy)        5672/tcp, 15672/tcp
 catalogapi        Up (healthy)        8080/tcp
 userapi           Up (healthy)        8070/tcp
 paymentsapi       Up (healthy)        8090/tcp, 8091/tcp
-notifications-api Up (healthy)        5001/tcp
+localstack        Up (healthy)        127.0.0.1:4566->4566/tcp
+kong-gateway      Up (healthy)        8000/tcp, 127.0.0.1:8001->8001/tcp
 ```
 
 5. **Pare os serviços quando terminar**:
@@ -175,6 +175,72 @@ docker-compose down
 | Swagger CatalogAPI | http://catalog.localhost:8000/swagger | Testes do catálogo pelo Gateway |
 
 As portas HTTP dos microsserviços não são publicadas no host. Consulte `docker/kong/README.md` para as rotas públicas, rotas protegidas e exemplos de chamadas JWT.
+
+### LocalStack, SQS e Lambda
+
+O LocalStack executa localmente os serviços SQS, Lambda, IAM e CloudWatch Logs. O build do Compose compila o projeto `FCGNotification`, gera seu pacote ZIP e o inclui na imagem `fcg-localstack`.
+
+No fluxo completo de pagamento, o RabbitMQ permanece entre catálogo e pagamento. Depois de processar o pedido, o FCGPayment publica o resultado no RabbitMQ para o catálogo e também na fila SQS `notification-payment-processed`. Essa fila aciona a Lambda `fcg-notification` no LocalStack.
+
+Na inicialização são criados automaticamente:
+
+| Recurso | Nome | Finalidade |
+|---|---|---|
+| Lambda | `fcg-notification` | Processar eventos de notificação |
+| Fila SQS | `user-created` | Notificação de novo usuário |
+| Fila SQS | `notification-payment-processed` | Notificação do resultado do pagamento |
+| DLQ | `user-created-dlq` | Guardar eventos de usuário após três falhas |
+| DLQ | `notification-payment-processed-dlq` | Guardar eventos de pagamento após três falhas |
+
+Credenciais AWS reais não são utilizadas. O Compose fornece `test` como access key e secret key. Se a edição instalada exigir autenticação, defina seu token apenas no terminal, sem colocá-lo no repositório:
+
+```powershell
+$env:LOCALSTACK_AUTH_TOKEN = "seu-token-local"
+docker compose up -d --build
+```
+
+Para conferir os recursos provisionados:
+
+```powershell
+.\localstack\status.ps1
+```
+
+Para enviar um usuário criado:
+
+```powershell
+.\localstack\test-user-created.ps1
+.\localstack\test-user-created.ps1 -Name "Maria" -Email "maria@fcg.local"
+```
+
+Para enviar pagamentos:
+
+```powershell
+.\localstack\test-payment-processed.ps1 -Status Approved
+.\localstack\test-payment-processed.ps1 -Status Declined -Reason "Saldo insuficiente"
+```
+
+Os scripts podem ser executados de qualquer diretório. Para acompanhar a criação dos recursos:
+
+```powershell
+docker compose logs localstack --tail 200
+docker compose logs localstack --follow
+```
+
+Use `Ctrl+C` para encerrar apenas o acompanhamento; os containers continuam ativos. Os logs das execuções da Lambda ficam no CloudWatch Logs simulado e podem ser consultados com:
+
+```powershell
+.\localstack\logs.ps1
+```
+
+Uma mensagem como `[EMAIL] Bem-vindo enviado` ou `[EMAIL] Compra confirmada` confirma que o evento passou pelo SQS e executou a Lambda.
+
+Se o container ficar `unhealthy`, consulte primeiro:
+
+```powershell
+docker compose logs localstack --tail 200
+```
+
+Erros de licença devem ser resolvidos configurando `LOCALSTACK_AUTH_TOKEN` localmente. O arquivo `.env` é ignorado pelo Git e nunca deve conter credenciais que serão versionadas.
 
 ### Validação rápida do Gateway
 
@@ -395,7 +461,7 @@ As variáveis estão definidas diretamente no `docker-compose.yml` com valores d
 ### 1. Registro de Novo Usuário
 
 ```
-User Service → RabbitMQ (user-created queue) → Notification Service
+User Service → SQS (user-created) → FCGNotification Lambda
                 ↓
          Banco de Dados
 ```
@@ -412,8 +478,7 @@ Catalog Service (Order) → RabbitMQ (order-placed queue) → Payment Service
 
 ```
 Payment Service → RabbitMQ (payment.exchange) → Catalog Service
-                       ↓
-                 Notification Service
+       └───────→ SQS (notification-payment-processed) → FCGNotification Lambda
 ```
 
 ---

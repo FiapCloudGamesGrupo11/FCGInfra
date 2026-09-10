@@ -1,1 +1,4 @@
 .vs/
+.env
+docker/.env
+docker/localstack/volume/

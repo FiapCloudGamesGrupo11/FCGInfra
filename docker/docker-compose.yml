@@ -1,3 +1,5 @@
+name: fcg
+
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -64,7 +66,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      rabbitmq:
+      localstack:
         condition: service_healthy
     expose:
       - "8070"
@@ -72,11 +74,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8070
       ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=Your_strong!Passw0rd;TrustServerCertificate=True;"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Port: "5672"
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
-      RabbitMQ__QueueName: user-created
+      AWS__Region: us-east-1
+      AWS__ServiceUrl: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
       CatalogApi__BaseUrl: http://catalogapi
 
   paymentsapi:
@@ -88,6 +89,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
     expose:
       - "8090"
       - "8091"
@@ -97,27 +100,37 @@ services:
       RabbitMQ__Port: "5672"
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
+      AWS__Region: us-east-1
+      AWS__ServiceUrl: http://localstack:4566
+      AWS__PaymentNotificationQueue: notification-payment-processed
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
 
-  notifications-api:
+  localstack:
     build:
-      context: ../../FCGNotification
-      dockerfile: Dockerfile
-    image: notificationapi:latest
-    container_name: notifications-api
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    expose:
-      - "8080"
+      context: ../..
+      dockerfile: FCGInfra/docker/localstack/Dockerfile
+    image: fcg-localstack:4.8.1
+    container_name: fcg-localstack
+    ports:
+      - "127.0.0.1:4566:4566"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Port: "5672"
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
-      RabbitMQ__UserCreatedQueue: user-created
-      RabbitMQ__PaymentProcessedQueue: catalog-payment-processed
-      RabbitMQ__NotificationPaymentProcessedQueue: notification-payment-processed
+      SERVICES: sqs,lambda,iam,logs
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+      DEBUG: ${LOCALSTACK_DEBUG:-0}
+      PERSISTENCE: "0"
+      LAMBDA_DOCKER_NETWORK: fcg-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
 
   kong:
     image: kong:3.9
@@ -144,3 +157,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+networks:
+  default:
+    name: fcg-network
