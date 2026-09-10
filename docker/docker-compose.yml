@@ -16,6 +16,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+  
+  mongo:
+    image: mongo:7
+    container_name: fcg-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "admin"
+      MONGO_INITDB_ROOT_PASSWORD: "Your_strong!MongoPassw0rd"
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --username $$MONGO_INITDB_ROOT_USERNAME --password $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval \"db.adminCommand('ping').ok\" | grep 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -42,6 +63,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mongo:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     expose:
@@ -49,6 +72,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=Your_strong!Passw0rd;TrustServerCertificate=True;"
+      MongoSettings__ConnectionString: "mongodb://admin:Your_strong!MongoPassw0rd@mongo:27017/FiapCloudGames?authSource=admin"
+      MongoSettings__DatabaseName: "FiapCloudGames"
       RabbitMq__Host: rabbitmq
       RabbitMq__User: guest
       RabbitMq__Password: guest
@@ -144,3 +169,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+volumes:
+  mongo-data:
