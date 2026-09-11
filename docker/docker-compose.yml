@@ -55,6 +55,17 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+  
+  redis:
+    image: redis:7-alpine
+    container_name: fcg-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   catalogapi:
     build:
@@ -81,6 +92,8 @@ services:
       RabbitMq__Password: guest
       RabbitMq__OrderQueueName: order-placed
       RabbitMq__PaymentProcessQueueName: payment-processed
+      Redis__ConnectionString: "redis:6379"
+      Redis__InstanceName: "FiapCloudGames:"
 
   userapi:
     build:
