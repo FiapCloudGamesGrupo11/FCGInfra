@@ -1,5 +1,7 @@
 # FCGInfra - Infraestrutura da Plataforma Cloud Games
 
+> Guia completo de arquitetura, conceitos e testes: [API Gateway e Serverless local](docs/GUIA-GATEWAY-SERVERLESS.md).
+
 ## Descrição
 
 O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **FIAP Cloud Games (FCG)**. Ele contém as configurações e definições necessárias para executar toda a arquitetura de microsserviços em diferentes ambientes:
@@ -208,6 +210,8 @@ Para conferir os recursos provisionados:
 .\localstack\status.ps1
 ```
 
+O relatório apresenta separadamente mensagens disponíveis e mensagens que estão sendo processadas em cada fila principal e DLQ.
+
 Para enviar um usuário criado:
 
 ```powershell
@@ -232,10 +236,30 @@ docker compose logs localstack --follow
 Use `Ctrl+C` para encerrar apenas o acompanhamento; os containers continuam ativos. Os logs das execuções da Lambda ficam no CloudWatch Logs simulado e podem ser consultados com:
 
 ```powershell
-.\localstack\logs.ps1
+.\localstack\logs.ps1              # últimos 15 minutos
+.\localstack\logs.ps1 -Minutes 60  # última hora
 ```
 
 Uma mensagem como `[EMAIL] Bem-vindo enviado` ou `[EMAIL] Compra confirmada` confirma que o evento passou pelo SQS e executou a Lambda.
+
+Para comprovar o tratamento de falhas e o redrive após três tentativas, envie propositalmente uma mensagem inválida:
+
+```powershell
+.\localstack\test-invalid-dlq.ps1
+.\localstack\test-invalid-dlq.ps1 -Queue notification-payment-processed
+```
+
+O script não apaga nem lê o conteúdo da DLQ. Ele compara o contador inicial, envia um JSON inválido, aguarda as tentativas da Lambda e confirma que a DLQ recebeu uma nova mensagem. O processo pode levar cerca de dois minutos por causa do tempo de invisibilidade entre as tentativas.
+
+Se estiver utilizando o CMD a partir da raiz do repositório, invoque os scripts por meio do PowerShell:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\status.ps1"
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\logs.ps1" -Minutes 30
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\test-invalid-dlq.ps1"
+```
+
+O painel gráfico do LocalStack exige que o container esteja conectado a uma conta/licença compatível. No ambiente local sem token, os scripts acima são a interface de diagnóstico oficial do projeto; a ausência de recursos no painel não significa que SQS ou Lambda estejam indisponíveis.
 
 Se o container ficar `unhealthy`, consulte primeiro:
 
