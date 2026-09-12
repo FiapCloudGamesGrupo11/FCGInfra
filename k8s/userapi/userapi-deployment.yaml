@@ -9,36 +9,53 @@ spec:
   selector:
     matchLabels:
       app: user-api
-  
+
   template:
     metadata:
       labels:
         app: user-api
-  
+
     spec:
       containers:
-      - name: user-api
-        image: fcguserapi:latest
-        imagePullPolicy: IfNotPresent
+        - name: user-api
+          image: fcguserapi:latest
+          imagePullPolicy: IfNotPresent
 
-        ports:
-        - containerPort: 8070
+          ports:
+            - containerPort: 8070
 
-        resources:
-          requests:
-            cpu: "50m"
-            memory: "64Mi"
-          limits:
-            cpu: "250m"
-            memory: "256Mi"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
 
-        envFrom:
-        - configMapRef: 
-            name: configmapcommon
-        - secretRef:
-              name: secretfcg
+          envFrom:
+            - configMapRef:
+                name: configmapcommon
+            - secretRef:
+                name: secretfcg
 
-        env:
-        - name: ASPNETCORE_URLS
-          value: http://+:8070
-  
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:8070"
+
+            - name: NEW_RELIC_APP_NAME
+              value: "FCG-UsersAPI"
+
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: newrelic-secret
+                  key: license-key
+
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: "true"
+
+            - name: NEW_RELIC_APPLICATION_LOGGING_ENABLED
+              value: "true"
+
+            - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
+              value: "true"

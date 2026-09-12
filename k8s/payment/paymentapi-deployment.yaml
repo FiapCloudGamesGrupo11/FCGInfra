@@ -40,7 +40,25 @@ spec:
 
         env:
         - name: ASPNETCORE_URLS
-          value: http://+:8090
+          value: "http://+:8090"
+
+        - name: NEW_RELIC_APP_NAME
+          value: "FCG-PaymentsAPI"
+
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-secret
+              key: license-key
+
+        - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+          value: "true"
+
+        - name: NEW_RELIC_APPLICATION_LOGGING_ENABLED
+          value: "true"
+
+        - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
+          value: "true"
 
 
 

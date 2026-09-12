@@ -388,6 +388,58 @@ Payment Service → RabbitMQ (payment.exchange) → Catalog Service
 
 ---
 
+## Observabilidade com New Relic
+
+O New Relic foi escolhido como plataforma de APM para centralizar métricas, logs e traces da aplicação.
+
+O agente .NET foi adicionado aos seguintes microsserviços:
+
+- `FCG-UsersAPI`
+- `FCG-CatalogAPI`
+- `FCG-PaymentsAPI`
+
+Os deployments do Kubernetes habilitam o trace distribuído e o encaminhamento dos logs. A licença é fornecida pelo Secret `newrelic-secret` e não deve ser gravada nos arquivos do repositório.
+
+### Configurar a licença
+
+Antes do deploy, defina a licença na sessão atual do PowerShell:
+
+```powershell
+$env:NEW_RELIC_LICENSE_KEY = "SUA_LICENCA"
+```
+
+Em seguida, execute o script dentro da pasta `k8s`:
+
+```powershell
+.\apply-all.ps1
+```
+
+O script cria ou atualiza o Secret `newrelic-secret` no Kubernetes sem salvar a licença no repositório.
+
+### Dados monitorados
+
+O dashboard deve apresentar:
+
+- latência das requisições;
+- quantidade de requisições e throughput;
+- respostas agrupadas por status HTTP;
+- taxa de erros;
+- logs dos microsserviços.
+
+O trace distribuído será utilizado para acompanhar o fluxo de compra entre o CatalogAPI e o PaymentsAPI por meio do RabbitMQ.
+
+### Consultar no New Relic
+
+Após o deploy e a geração de tráfego, os serviços poderão ser encontrados em **APM & Services** com os seguintes nomes:
+
+- `FCG-UsersAPI`
+- `FCG-CatalogAPI`
+- `FCG-PaymentsAPI`
+
+A instrumentação da função Serverless de notificações deve ser validada junto com os demais serviços antes da apresentação.
+
+---
+
 ## Monitoramento
 
 ### Docker Compose
@@ -444,5 +496,5 @@ Integrantes:
 
 ---
 
-**Última atualização**: 2026-07-12  
-**Versão**: 1.0.0  
+**Última atualização**: 2026-09-12
+**Versão**: 1.1.0
