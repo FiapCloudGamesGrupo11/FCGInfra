@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Configurações locais
+.env
+docker/.env
+docker/localstack/volume/

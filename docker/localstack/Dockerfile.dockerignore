@@ -1,0 +1,14 @@
+**
+
+!FCGNotification/
+!FCGNotification/NotificationsAPI/
+!FCGNotification/NotificationsAPI/**
+
+!FCGInfra/
+!FCGInfra/docker/
+!FCGInfra/docker/localstack/
+!FCGInfra/docker/localstack/init-notification.sh
+
+**/bin/
+**/obj/
+**/.vs/

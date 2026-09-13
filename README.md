@@ -1,5 +1,7 @@
 # FCGInfra - Infraestrutura da Plataforma Cloud Games
 
+> Guia completo de arquitetura, conceitos e testes: [API Gateway e Serverless local](docs/GUIA-GATEWAY-SERVERLESS.md).
+
 ## Descrição
 
 O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **FIAP Cloud Games (FCG)**. Ele contém as configurações e definições necessárias para executar toda a arquitetura de microsserviços em diferentes ambientes:
@@ -8,6 +10,10 @@ O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **
 - **Produção/Staging**: Kubernetes manifests para deploy em clusters
 
 Este repositório não contém código de aplicação, mas sim toda a orquestração, configuração e infraestrutura que conecta os microsserviços (FCGUser, FCGCatalog, FCGPayment, FCGNotification).
+
+No ambiente Docker Compose, o Kong API Gateway é a única entrada HTTP para UserAPI e CatalogAPI. As APIs permanecem acessíveis apenas pela rede interna do Compose.
+
+> Para configurar, executar e testar o Gateway do zero, consulte o [guia completo do Kong](docker/kong/README.md).
 
 ---
 
@@ -39,13 +45,12 @@ Centralizar e padronizar:
 │         └─────────────────┼──────────────────┘                  │
 │                           │                                     │
 │  ┌────────────────────────┴────────────────────────┐            │
-│  │     FCGNotification API (Port 5001)             │            │
+│  │ FCGNotification Lambda (LocalStack: 4566)       │            │
 │  └────────────────────────┬────────────────────────┘            │
 │                           │                                     │
-│         ┌─────────────────┴─────────────────┐                  │
-│         │       Message Bus (RabbitMQ)      │                  │
-│         │  (AMQP: 5672, Management: 15672) │                  │
-│         └─────────────────┬─────────────────┘                  │
+│  ┌────────────────────────┴────────────────────────┐            │
+│  │ SQS (notificações) + RabbitMQ (demais fluxos)   │            │
+│  └────────────────────────┬────────────────────────┘            │
 │                           │                                     │
 │         ┌─────────────────┴─────────────────┐                  │
 │         │   Database (SQL Server 2022)      │                  │
@@ -62,7 +67,10 @@ Centralizar e padronizar:
 ```
 FCGInfra/
 ├── docker/
-│   └── docker-compose.yml          # Orquestração para desenvolvimento
+│   ├── docker-compose.yml          # Orquestração para desenvolvimento
+│   └── kong/
+│       ├── kong.yml                # Serviços, rotas e políticas do Gateway
+│       └── README.md               # Guia de uso e validação do Gateway
 ├── k8s/
 │   ├── apply-all.ps1               # Script para aplicar todos os manifests
 │   ├── common/
@@ -74,6 +82,9 @@ FCGInfra/
 │   ├── rabbitmq/
 │   │   ├── rabbitmq-deployment.yaml
 │   │   └── rabbitmq-service.yaml
+│   ├── mongo/
+│   │   ├── mongo-deployment.yaml
+│   │   └── mongo-service.yaml
 │   ├── userapi/
 │   │   ├── userapi-deployment.yaml
 │   │   └── userapi-service.yaml
@@ -98,7 +109,7 @@ FCGInfra/
 - Docker Desktop instalado e em execução
 - Docker Compose (incluído no Docker Desktop)
 - ~8GB de memória disponível
-- Acesso às portas: 1433, 5672, 15672, 8070, 8080, 8090, 8091, 5001
+- Acesso às portas: 1433, 4566, 5672, 8000, 8001 e 15672
 
 ### Passos para Executar
 
@@ -121,6 +132,15 @@ cd FCGInfra/docker
 docker-compose up -d
 ```
 
+Com Docker Compose v2, prefira:
+
+```powershell
+docker compose config --quiet
+docker compose up -d --build
+```
+
+Na primeira execução, o download das imagens e o build dos microsserviços podem demorar. Aguarde o retorno do prompt antes de consultar os containers.
+
 4. **Verifique se todos os containers estão em execução**:
 
 ```bash
@@ -136,7 +156,8 @@ rabbitmq          Up (healthy)        5672/tcp, 15672/tcp
 catalogapi        Up (healthy)        8080/tcp
 userapi           Up (healthy)        8070/tcp
 paymentsapi       Up (healthy)        8090/tcp, 8091/tcp
-notifications-api Up (healthy)        5001/tcp
+localstack        Up (healthy)        127.0.0.1:4566->4566/tcp
+kong-gateway      Up (healthy)        8000/tcp, 127.0.0.1:8001->8001/tcp
 ```
 
 5. **Pare os serviços quando terminar**:
@@ -149,14 +170,116 @@ docker-compose down
 
 ##  Acessar os Serviços Localmente
 
-### APIs dos Microsserviços
+### API Gateway
 
-| Microsserviço | URL | Swagger/Docs |
-|---------------|-----|--------------|
-| FCGCatalog | http://localhost:8080 | http://localhost:8080/swagger |
-| FCGUser | http://localhost:8070 | http://localhost:8070/swagger |
-| FCGPayment | http://localhost:8090 | http://localhost:8090/swagger |
-| FCGNotification | http://localhost:5001 | http://localhost:5001/swagger |
+| Componente | URL | Finalidade |
+|------------|-----|------------|
+| Kong Proxy | http://localhost:8000 | Entrada para UserAPI e CatalogAPI |
+| Kong Admin API | http://localhost:8001 | Administração local e diagnóstico |
+| Swagger UserAPI | http://user.localhost:8000/swagger | Testes da API de usuários pelo Gateway |
+| Swagger CatalogAPI | http://catalog.localhost:8000/swagger | Testes do catálogo pelo Gateway |
+
+As portas HTTP dos microsserviços não são publicadas no host. Consulte `docker/kong/README.md` para as rotas públicas, rotas protegidas e exemplos de chamadas JWT.
+
+### LocalStack, SQS e Lambda
+
+O LocalStack executa localmente os serviços SQS, Lambda, IAM e CloudWatch Logs. O build do Compose compila o projeto `FCGNotification`, gera seu pacote ZIP e o inclui na imagem `fcg-localstack`.
+
+No fluxo completo de pagamento, o RabbitMQ permanece entre catálogo e pagamento. Depois de processar o pedido, o FCGPayment publica o resultado no RabbitMQ para o catálogo e também na fila SQS `notification-payment-processed`. Essa fila aciona a Lambda `fcg-notification` no LocalStack.
+
+Na inicialização são criados automaticamente:
+
+| Recurso | Nome | Finalidade |
+|---|---|---|
+| Lambda | `fcg-notification` | Processar eventos de notificação |
+| Fila SQS | `user-created` | Notificação de novo usuário |
+| Fila SQS | `notification-payment-processed` | Notificação do resultado do pagamento |
+| DLQ | `user-created-dlq` | Guardar eventos de usuário após três falhas |
+| DLQ | `notification-payment-processed-dlq` | Guardar eventos de pagamento após três falhas |
+
+Credenciais AWS reais não são utilizadas. O Compose fornece `test` como access key e secret key. Se a edição instalada exigir autenticação, defina seu token apenas no terminal, sem colocá-lo no repositório:
+
+```powershell
+$env:LOCALSTACK_AUTH_TOKEN = "seu-token-local"
+docker compose up -d --build
+```
+
+Para conferir os recursos provisionados:
+
+```powershell
+.\localstack\status.ps1
+```
+
+O relatório apresenta separadamente mensagens disponíveis e mensagens que estão sendo processadas em cada fila principal e DLQ.
+
+Para enviar um usuário criado:
+
+```powershell
+.\localstack\test-user-created.ps1
+.\localstack\test-user-created.ps1 -Name "Maria" -Email "maria@fcg.local"
+```
+
+Para enviar pagamentos:
+
+```powershell
+.\localstack\test-payment-processed.ps1 -Status Approved
+.\localstack\test-payment-processed.ps1 -Status Declined -Reason "Saldo insuficiente"
+```
+
+Os scripts podem ser executados de qualquer diretório. Para acompanhar a criação dos recursos:
+
+```powershell
+docker compose logs localstack --tail 200
+docker compose logs localstack --follow
+```
+
+Use `Ctrl+C` para encerrar apenas o acompanhamento; os containers continuam ativos. Os logs das execuções da Lambda ficam no CloudWatch Logs simulado e podem ser consultados com:
+
+```powershell
+.\localstack\logs.ps1              # últimos 15 minutos
+.\localstack\logs.ps1 -Minutes 60  # última hora
+```
+
+Uma mensagem como `[EMAIL] Bem-vindo enviado` ou `[EMAIL] Compra confirmada` confirma que o evento passou pelo SQS e executou a Lambda.
+
+Para comprovar o tratamento de falhas e o redrive após três tentativas, envie propositalmente uma mensagem inválida:
+
+```powershell
+.\localstack\test-invalid-dlq.ps1
+.\localstack\test-invalid-dlq.ps1 -Queue notification-payment-processed
+```
+
+O script não apaga nem lê o conteúdo da DLQ. Ele compara o contador inicial, envia um JSON inválido, aguarda as tentativas da Lambda e confirma que a DLQ recebeu uma nova mensagem. O processo pode levar cerca de dois minutos por causa do tempo de invisibilidade entre as tentativas.
+
+Se estiver utilizando o CMD a partir da raiz do repositório, invoque os scripts por meio do PowerShell:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\status.ps1"
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\logs.ps1" -Minutes 30
+powershell -ExecutionPolicy Bypass -File ".\docker\localstack\test-invalid-dlq.ps1"
+```
+
+O painel gráfico do LocalStack exige que o container esteja conectado a uma conta/licença compatível. No ambiente local sem token, os scripts acima são a interface de diagnóstico oficial do projeto; a ausência de recursos no painel não significa que SQS ou Lambda estejam indisponíveis.
+
+Se o container ficar `unhealthy`, consulte primeiro:
+
+```powershell
+docker compose logs localstack --tail 200
+```
+
+Erros de licença devem ser resolvidos configurando `LOCALSTACK_AUTH_TOKEN` localmente. O arquivo `.env` é ignorado pelo Git e nunca deve conter credenciais que serão versionadas.
+
+### Validação rápida do Gateway
+
+```powershell
+# Deve falhar: UserAPI não está publicada diretamente
+curl.exe -i http://localhost:8070/api/User/GetAll
+
+# Deve retornar 401 pelo Kong
+curl.exe -i http://localhost:8000/api/User/GetAll
+```
+
+Para o roteiro completo de Swagger, criação de Admin, testes `401`/`403`/`200` e diagnóstico, consulte o [guia do Kong](docker/kong/README.md).
 
 ### Ferramentas de Infraestrutura
 
@@ -365,7 +488,7 @@ As variáveis estão definidas diretamente no `docker-compose.yml` com valores d
 ### 1. Registro de Novo Usuário
 
 ```
-User Service → RabbitMQ (user-created queue) → Notification Service
+User Service → SQS (user-created) → FCGNotification Lambda
                 ↓
          Banco de Dados
 ```
@@ -382,8 +505,7 @@ Catalog Service (Order) → RabbitMQ (order-placed queue) → Payment Service
 
 ```
 Payment Service → RabbitMQ (payment.exchange) → Catalog Service
-                       ↓
-                 Notification Service
+       └───────→ SQS (notification-payment-processed) → FCGNotification Lambda
 ```
 
 ---
@@ -397,6 +519,7 @@ O agente .NET foi adicionado aos seguintes microsserviços:
 - `FCG-UsersAPI`
 - `FCG-CatalogAPI`
 - `FCG-PaymentsAPI`
+- `FCG-NotificationLambda`
 
 Os deployments do Kubernetes habilitam o trace distribuído e o encaminhamento dos logs. A licença é fornecida pelo Secret `newrelic-secret` e não deve ser gravada nos arquivos do repositório.
 
@@ -435,8 +558,11 @@ Após o deploy e a geração de tráfego, os serviços poderão ser encontrados 
 - `FCG-UsersAPI`
 - `FCG-CatalogAPI`
 - `FCG-PaymentsAPI`
+- - `FCG-NotificationLambda`
 
-A instrumentação da função Serverless de notificações deve ser validada junto com os demais serviços antes da apresentação.
+A função Serverless `FCG-NotificationLambda` também utiliza o agente .NET do New Relic. A instrumentação foi validada localmente no LocalStack com eventos das filas `user-created` e `notification-payment-processed`, incluindo a geração do payload `NR_LAMBDA_MONITORING`.
+
+No LocalStack, esse payload permanece disponível nos logs da função. Para enviar a telemetria ao painel do New Relic em um ambiente AWS, também será necessária a integração pelo New Relic Lambda Extension ou pelo CloudWatch.
 
 ---
 
