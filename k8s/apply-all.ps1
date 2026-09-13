@@ -30,3 +30,8 @@ kubectl apply -f mongo/mongo-service.yaml
 # SQL Server
 kubectl apply -f sqlserver/sqlserver-deployment.yaml
 kubectl apply -f sqlserver/sqlserver-service.yaml
+
+# Kong API Gateway (DB-less)
+kubectl apply -f kong/kong-config.yaml
+kubectl apply -f kong/kong-deployment.yaml
+kubectl apply -f kong/kong-service.yaml
