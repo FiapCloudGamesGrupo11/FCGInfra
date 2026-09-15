@@ -497,6 +497,9 @@ Payment Service → RabbitMQ (payment.exchange) → Catalog Service
 
 ## Observabilidade com New Relic
 
+Os logs da Lambda local sao enviados pelo servico `notification-log-forwarder`
+do Compose. Veja [configuracao, consultas e limites](docker/observability/README.md).
+
 O New Relic foi escolhido como plataforma de APM para centralizar métricas, logs e traces da aplicação.
 
 O agente .NET foi adicionado aos seguintes microsserviços:

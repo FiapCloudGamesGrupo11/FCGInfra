@@ -41,6 +41,7 @@ do {
     Start-Sleep -Seconds 3
 } while ((Get-Date) -lt $deadline)
 if (-not $ready) { throw "Lambda ou gatilhos nao ficaram prontos. Consulte os logs do LocalStack." }
+Invoke-Checked docker @("compose", "-f", $composeFile, "up", "-d", "--build", "--no-deps", "notification-log-forwarder")
 
 $secret = & kubectl create secret generic newrelic-secret `
     --from-literal="license-key=$($env:NEW_RELIC_LICENSE_KEY)" `

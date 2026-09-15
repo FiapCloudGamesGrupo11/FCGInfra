@@ -12,7 +12,8 @@ Deployment nem Service da Notification no cluster.
 4. Execute `./apply-all.ps1` nesta pasta.
 
 O script compila as imagens das APIs, sobe o LocalStack e espera a Lambda e os dois
-gatilhos SQS. Depois aplica Secrets, bancos, Redis, volume de pagamentos e APIs.
+gatilhos SQS. Inicia tambem o encaminhador de logs da Lambda para New Relic no Docker.
+Depois aplica Secrets, bancos, Redis, volume de pagamentos e APIs.
 Os Deployments usam os mesmos nomes de imagem do Compose. `-SkipBuild` pula apenas
 o build das APIs; use somente quando as imagens atuais ja estiverem disponiveis.
 
