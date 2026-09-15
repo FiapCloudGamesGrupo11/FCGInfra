@@ -11,4 +11,4 @@ spec:
   - port: 8070
     targetPort: 8070
 
-  type: NodePort
+  type: ClusterIP

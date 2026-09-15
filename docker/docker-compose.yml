@@ -141,6 +141,8 @@ services:
       dockerfile: Dockerfile
     image: paymentsapi:latest
     container_name: apipayments
+    volumes:
+      - payment-data:/app/payment-data
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -159,6 +161,7 @@ services:
       AWS__Region: us-east-1
       AWS__ServiceUrl: http://localstack:4566
       AWS__PaymentNotificationQueue: notification-payment-processed
+      PaymentDelivery__Directory: /app/payment-data
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
@@ -177,6 +180,7 @@ services:
       - "127.0.0.1:4566:4566"
     environment:
       SERVICES: sqs,lambda,iam,logs
+      SQS_ENDPOINT_STRATEGY: dynamic
       AWS_DEFAULT_REGION: us-east-1
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -227,4 +231,5 @@ networks:
     name: fcg-network
 
 volumes:
+  payment-data:
   mongo-data:

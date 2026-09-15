@@ -5,6 +5,8 @@ metadata:
 
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
 
   selector:
     matchLabels:
@@ -16,10 +18,19 @@ spec:
         app: payments-api
   
     spec:
+      securityContext:
+        fsGroup: 1654
+      volumes:
+      - name: payment-data
+        persistentVolumeClaim:
+          claimName: payment-data
       containers:
       - name: payments-api
-        image: fcgpaymentsapi:latest
+        image: paymentsapi:latest
         imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: payment-data
+          mountPath: /app/payment-data
 
         ports:
         - containerPort: 8090

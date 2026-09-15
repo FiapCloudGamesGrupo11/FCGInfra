@@ -344,11 +344,16 @@ sqlcmd -S localhost,1433 -U sa -P "Your_strong!Passw0rd"
 
 ## Deploy com Kubernetes
 
+O perfil local usa APIs, bancos, RabbitMQ, Redis e Kong no Kubernetes do Docker
+Desktop. SQS e Lambda continuam no LocalStack gerenciado pelo Compose.
+Consulte [o roteiro completo](k8s/README.md).
+
 ### Pré-requisitos
 
 - Kubectl instalado e configurado
-- Cluster Kubernetes em execução (Docker Desktop, Minikube, AKS, EKS, GKE, etc.)
+- Kubernetes habilitado no Docker Desktop, contexto `docker-desktop`
 - Acesso ao cluster
+- Variável `NEW_RELIC_LICENSE_KEY` definida na sessão
 
 ### Passos para Deploy
 
@@ -372,30 +377,9 @@ kubectl apply -f common/secrets.yaml
 .\apply-all.ps1
 ```
 
-Ou manualmente:
-
-```bash
-# SQL Server
-kubectl apply -f sqlserver/sqlserver-deployment.yaml
-kubectl apply -f sqlserver/sqlserver-service.yaml
-
-# RabbitMQ
-kubectl apply -f rabbitmq/rabbitmq-deployment.yaml
-kubectl apply -f rabbitmq/rabbitmq-service.yaml
-
-# Microsserviços
-kubectl apply -f userapi/userapi-deployment.yaml
-kubectl apply -f userapi/userapi-service.yaml
-
-kubectl apply -f catalogapi/catalogapi-deployment.yaml
-kubectl apply -f catalogapi/catalogapi-service.yaml
-
-kubectl apply -f payment/paymentapi-deployment.yaml
-kubectl apply -f payment/paymentapi-service.yaml
-
-kubectl apply -f notificationapi/notificationapi-deployment.yaml
-kubectl apply -f notificationapi/notificationapi-service.yaml
-```
+O script também compila as imagens, prepara o LocalStack, aguarda a Lambda e seus
+gatilhos e remove a antiga Notification contínua de uma instalação existente.
+Para outros clusters, adapte imagens, armazenamento e endpoint SQS antes do deploy.
 
 4. **Verifique o status dos pods**:
 
@@ -417,7 +401,8 @@ kubectl logs <pod-name>
 
 ### Acessar Serviços em Kubernetes
 
-Para acessar os serviços em um cluster Kubernetes local (Minikube/Docker Desktop), use:
+No Docker Desktop, o Gateway atende em `http://user.localhost:30000/swagger`
+e `http://catalog.localhost:30000/swagger`. Para diagnóstico, use:
 
 ```bash
 # Obter informações de acesso

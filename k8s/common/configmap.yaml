@@ -7,10 +7,20 @@ data:
 
   # Filas específicas
   RabbitMQ__OrderPlacedQueue: "order-placed"
-  RabbitMQ__PaymentProcessedQueue: "catalog-payment-processed"
-  RabbitMQ__NotificationPaymentProcessedQueue: "notification-payment-processed"
-  RabbitMQ__UserCreatedQueue: "user-created"
+  RabbitMQ__PaymentProcessedQueue: "payment-processed"
+  RabbitMq__OrderQueueName: "order-placed"
+  RabbitMq__PaymentProcessQueueName: "payment-processed"
+  RabbitMq__User: "guest"
   CatalogAPI__BaseUrl: "http://catalog-api:8080"
+  Redis__ConnectionString: "redis:6379"
+  Redis__InstanceName: "FiapCloudGames:"
+  # Docker Desktop local: LocalStack remains managed by FCGInfra/docker.
+  AWS__Region: "us-east-1"
+  AWS__ServiceUrl: "http://host.docker.internal:4566"
+  AWS__PaymentNotificationQueue: "notification-payment-processed"
+  AWS_ACCESS_KEY_ID: "test"
+  AWS_SECRET_ACCESS_KEY: "test"
+  PaymentDelivery__Directory: "/app/payment-data"
 
 
   # Exchanges
