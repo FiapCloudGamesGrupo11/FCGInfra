@@ -10,6 +10,9 @@ PAYMENT_QUEUE="notification-payment-processed"
 USER_DLQ="user-created-dlq"
 PAYMENT_DLQ="notification-payment-processed-dlq"
 LAMBDA_ROLE="arn:aws:iam::${ACCOUNT_ID}:role/fcg-notification-lambda-role"
+NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY:-}"
+NEW_RELIC_ACCOUNT_ID="${NEW_RELIC_ACCOUNT_ID:-}"
+NEW_RELIC_TRUSTED_ACCOUNT_KEY="${NEW_RELIC_TRUSTED_ACCOUNT_KEY:-${NEW_RELIC_ACCOUNT_ID}}"
 
 echo "Criando recursos locais do FCGNotification..."
 
@@ -43,6 +46,28 @@ awslocal sqs create-queue \
   --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"${PAYMENT_DLQ_ARN}\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}" \
   >/dev/null
 
+LAMBDA_ENV_FILE="/tmp/fcg-notification-environment.json"
+
+cat > "${LAMBDA_ENV_FILE}" <<EOF
+{
+  "Variables": {
+    "USER_CREATED_QUEUE": "${USER_QUEUE}",
+    "PAYMENT_PROCESSED_QUEUE": "${PAYMENT_QUEUE}",
+    "CORECLR_ENABLE_PROFILING": "1",
+    "CORECLR_PROFILER": "{36032161-FFC0-4B61-B559-F6C5D41BAE5A}",
+    "CORECLR_NEWRELIC_HOME": "/var/task/newrelic",
+    "CORECLR_PROFILER_PATH": "/var/task/newrelic/libNewRelicProfiler.so",
+    "NEW_RELIC_LAMBDA_HANDLER": "NotificationsAPI::NotificationsAPI.Function::FunctionHandler",
+    "NEW_RELIC_APP_NAME": "FCG-NotificationLambda",
+    "NEW_RELIC_APM_LAMBDA_MODE": "true",
+    "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED": "true",
+    "NEW_RELIC_ACCOUNT_ID": "${NEW_RELIC_ACCOUNT_ID}",
+    "NEW_RELIC_TRUSTED_ACCOUNT_KEY": "${NEW_RELIC_TRUSTED_ACCOUNT_KEY}",
+    "NEW_RELIC_LICENSE_KEY": "${NEW_RELIC_LICENSE_KEY}"
+  }
+}
+EOF
+
 awslocal lambda create-function \
   --function-name "${FUNCTION_NAME}" \
   --runtime dotnet8 \
@@ -51,7 +76,7 @@ awslocal lambda create-function \
   --zip-file fileb:///opt/code/fcg-notification.zip \
   --timeout 30 \
   --memory-size 256 \
-  --environment "Variables={USER_CREATED_QUEUE=${USER_QUEUE},PAYMENT_PROCESSED_QUEUE=${PAYMENT_QUEUE}}" \
+  --environment "file://${LAMBDA_ENV_FILE}" \
   >/dev/null
 
 awslocal lambda wait function-active-v2 --function-name "${FUNCTION_NAME}"
