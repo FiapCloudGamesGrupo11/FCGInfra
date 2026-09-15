@@ -24,4 +24,5 @@ FROM localstack/localstack:4.8.1
 COPY --from=notification-build /out/fcg-notification.zip /opt/code/fcg-notification.zip
 COPY FCGInfra/docker/localstack/init-notification.sh /etc/localstack/init/ready.d/10-init-notification.sh
 
-RUN chmod +x /etc/localstack/init/ready.d/10-init-notification.sh
+RUN sed -i 's/\r$//' /etc/localstack/init/ready.d/10-init-notification.sh \
+    && chmod +x /etc/localstack/init/ready.d/10-init-notification.sh
