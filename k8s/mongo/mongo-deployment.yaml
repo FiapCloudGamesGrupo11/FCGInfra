@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+
+spec:
+  serviceName: mongo
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: mongo
+
+  template:
+    metadata:
+      labels:
+        app: mongo
+
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:7
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 27017
+
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: MONGO_INITDB_ROOT_USERNAME
+
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: MONGO_INITDB_ROOT_PASSWORD
+
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-data
+
+    spec:
+      accessModes:
+      - ReadWriteOnce
+
+      resources:
+        requests:
+          storage: 10Gi

@@ -1,4 +1,15 @@
-# Entrar na pasta k8s
+Set-Location $PSScriptRoot
+
+if ([string]::IsNullOrWhiteSpace($env:NEW_RELIC_LICENSE_KEY)) {
+    throw "Defina a variável NEW_RELIC_LICENSE_KEY antes de executar o script."
+}
+
+kubectl create secret generic newrelic-secret `
+    --from-literal="license-key=$($env:NEW_RELIC_LICENSE_KEY)" `
+    --dry-run=client `
+    -o yaml |
+    kubectl apply -f -
+
 # Aplicar configs comuns
 kubectl apply -f common/configmap.yaml
 kubectl apply -f common/secrets.yaml
@@ -23,6 +34,15 @@ kubectl apply -f notificationapi/notificationapi-service.yaml
 kubectl apply -f rabbitmq/rabbitmq-deployment.yaml
 kubectl apply -f rabbitmq/rabbitmq-service.yaml
 
+# MongoDB
+kubectl apply -f mongo/mongo-deployment.yaml
+kubectl apply -f mongo/mongo-service.yaml
+
 # SQL Server
 kubectl apply -f sqlserver/sqlserver-deployment.yaml
 kubectl apply -f sqlserver/sqlserver-service.yaml
+
+# Kong API Gateway (DB-less)
+kubectl apply -f kong/kong-config.yaml
+kubectl apply -f kong/kong-deployment.yaml
+kubectl apply -f kong/kong-service.yaml
