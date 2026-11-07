@@ -62,7 +62,7 @@ foreach ($manifest in @(
     "rabbitmq/rabbitmq-deployment.yaml", "rabbitmq/rabbitmq-service.yaml",
     "mongo/mongo-deployment.yaml", "mongo/mongo-service.yaml",
     "sqlserver/sqlserver-deployment.yaml", "sqlserver/sqlserver-service.yaml",
-    "redis/redis.yaml", "payment/payment-data.yaml"
+    "redis/redis.yaml", "opensearch/opensearch-deployment.yaml", "payment/payment-data.yaml"
 )) {
     Invoke-Checked kubectl @("apply", "-f", $manifest)
 }

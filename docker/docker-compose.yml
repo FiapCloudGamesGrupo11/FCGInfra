@@ -67,6 +67,23 @@ services:
       timeout: 5s
       retries: 10
 
+  opensearch:
+    image: opensearchproject/opensearch:2.19.1
+    container_name: fcg-opensearch
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   catalogapi:
     build:
       context: ../../FCGCatalog
@@ -80,10 +97,13 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      opensearch:
+        condition: service_healthy
     expose:
       - "80"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      JwtSettings__SecretKey: "${FCG_JWT_SECRET:?Defina FCG_JWT_SECRET em docker/.env}"
       ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=${FCG_SQL_PASSWORD};TrustServerCertificate=True;"
       MongoSettings__ConnectionString: "mongodb://${FCG_MONGO_USER}:${FCG_MONGO_PASSWORD}@mongo:27017/FiapCloudGames?authSource=admin"
       MongoSettings__DatabaseName: "FiapCloudGames"
@@ -94,6 +114,9 @@ services:
       RabbitMq__PaymentProcessQueueName: payment-processed
       Redis__ConnectionString: "redis:6379"
       Redis__InstanceName: "FiapCloudGames:"
+      OpenSearch__Endpoint: "http://opensearch:9200"
+      OpenSearch__IndexName: "games-v1"
+      OpenSearch__UseAwsSigV4: "false"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_APP_NAME: FCG-CatalogAPI
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
@@ -118,6 +141,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8070
+      JwtSettings__SecretKey: "${FCG_JWT_SECRET}"
       ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=${FCG_SQL_PASSWORD};TrustServerCertificate=True;"
       AWS__Region: us-east-1
       AWS__ServiceUrl: http://localstack:4566
@@ -255,3 +279,4 @@ volumes:
   notification-log-state:
   payment-data:
   mongo-data:
+  opensearch-data:

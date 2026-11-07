@@ -31,11 +31,6 @@ data:
             paths:
               - /api/User
             strip_path: false
-            plugins:
-              - name: jwt
-                config:
-                  claims_to_verify:
-                    - exp
 
       - name: catalog-api
         url: http://catalog-api:8080
@@ -52,17 +47,5 @@ data:
               - /api/Game
               - /api/OnSale
               - /api/UsersGames
+              - /search
             strip_path: false
-            plugins:
-              - name: jwt
-                config:
-                  claims_to_verify:
-                    - exp
-
-    consumers:
-      - username: fcg-app
-        custom_id: fcg-client
-        jwt_secrets:
-          - key: FiapCloudGames
-            algorithm: HS256
-            secret: '_07P\Wbk|}j:Bp-zC/%`701{Owu?B_dJLSDJaljdlajdlajlda'

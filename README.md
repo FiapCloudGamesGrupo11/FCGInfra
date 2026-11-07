@@ -48,6 +48,14 @@ Para o ambiente Docker completo, copie `docker/.env.example` para `docker/.env` 
 - use tags imutáveis do ECR, probes de saúde, limites de recursos e rolling update nos deployments;
 - a criação do overlay AWS/EKS, Ingress, ECR e serviços gerenciados pertence às próximas etapas desta branch.
 
+### OpenSearch local e AWS
+
+O Docker Compose e os manifests Kubernetes comuns incluem um nó OpenSearch exclusivamente para desenvolvimento local. O catálogo usa `http://opensearch:9200`, sem SigV4.
+
+No overlay AWS/EKS, não será criado um OpenSearch dentro do cluster. O `OpenSearch__Endpoint` deverá apontar para o Amazon OpenSearch Service, `OpenSearch__UseAwsSigV4` será `true` e o pod receberá acesso por IAM Role. Os dados oficiais continuam no MongoDB e podem ser reindexados pela rota administrativa do catálogo.
+
+O Kong encaminha `/search` para o catálogo, mas a validação JWT permanece nas próprias APIs. Isso evita duplicar o segredo de assinatura na configuração declarativa do gateway.
+
 ## Descrição
 
 O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **FIAP Cloud Games (FCG)**. Ele contém as configurações e definições necessárias para executar toda a arquitetura de microsserviços em diferentes ambientes:

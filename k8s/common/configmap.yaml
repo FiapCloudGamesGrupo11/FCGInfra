@@ -13,6 +13,10 @@ data:
   CatalogAPI__BaseUrl: "http://catalog-api:8080"
   Redis__ConnectionString: "redis:6379"
   Redis__InstanceName: "FiapCloudGames:"
+  OpenSearch__Endpoint: "http://opensearch:9200"
+  OpenSearch__IndexName: "games-v1"
+  OpenSearch__AwsRegion: "us-east-1"
+  OpenSearch__UseAwsSigV4: "false"
   # Docker Desktop local: LocalStack remains managed by FCGInfra/docker.
   AWS__Region: "us-east-1"
   AWS__ServiceUrl: "http://host.docker.internal:4566"
