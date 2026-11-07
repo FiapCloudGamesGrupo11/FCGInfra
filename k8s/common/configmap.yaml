@@ -10,7 +10,6 @@ data:
   RabbitMQ__PaymentProcessedQueue: "payment-processed"
   RabbitMq__OrderQueueName: "order-placed"
   RabbitMq__PaymentProcessQueueName: "payment-processed"
-  RabbitMq__User: "guest"
   CatalogAPI__BaseUrl: "http://catalog-api:8080"
   Redis__ConnectionString: "redis:6379"
   Redis__InstanceName: "FiapCloudGames:"

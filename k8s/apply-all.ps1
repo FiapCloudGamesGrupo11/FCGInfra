@@ -3,6 +3,7 @@ param([switch]$SkipBuild)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $composeFile = Join-Path $PSScriptRoot "../docker/docker-compose.yml"
+$localSecretsFile = Join-Path $PSScriptRoot "common/secrets.yaml"
 
 function Invoke-Checked {
     param([string]$Command, [string[]]$Arguments)
@@ -18,6 +19,10 @@ if ($LASTEXITCODE -ne 0 -or $contextName.Trim() -ne "docker-desktop") {
 
 if ([string]::IsNullOrWhiteSpace($env:NEW_RELIC_LICENSE_KEY)) {
     throw "Defina a variável NEW_RELIC_LICENSE_KEY antes de executar o script."
+}
+
+if (-not (Test-Path -LiteralPath $localSecretsFile)) {
+    throw "Crie k8s/common/secrets.yaml a partir de secrets.example.yaml e preencha os valores locais. O arquivo é ignorado pelo Git."
 }
 
 if (-not $SkipBuild) {

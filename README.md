@@ -2,6 +2,52 @@
 
 > Guia completo de arquitetura, conceitos e testes: [API Gateway e Serverless local](docs/GUIA-GATEWAY-SERVERLESS.md).
 
+## Fase 4 - estado da branch `feature/fase-4-aws`
+
+### O que foi feito
+
+- criação da branch dedicada à infraestrutura AWS, sem alteração da `main`;
+- remoção do arquivo Kubernetes que continha credenciais versionadas;
+- inclusão de `k8s/common/secrets.example.yaml` somente como modelo;
+- inclusão de `k8s/common/secrets.yaml` no `.gitignore`;
+- validação prévia no `k8s/apply-all.ps1` para impedir deploy local sem o arquivo de segredos;
+- leitura das credenciais do RabbitMQ pelo Kubernetes Secret.
+
+### Configuração local dos segredos
+
+Crie o arquivo ignorado pelo Git:
+
+```powershell
+Copy-Item .\k8s\common\secrets.example.yaml .\k8s\common\secrets.yaml
+```
+
+Substitua todos os marcadores `REPLACE_AT_DEPLOY_TIME` no novo `secrets.yaml`. O modelo não deve ser aplicado diretamente ao cluster. Os valores reais nunca devem ser commitados.
+
+O secret contempla conexões SQL e MongoDB, credenciais do RabbitMQ e configurações JWT consumidas pelos microsserviços. Em produção, sua criação será responsabilidade do pipeline ou do mecanismo de segredos definido pelo dono da conta AWS, preferencialmente integrado ao AWS Secrets Manager.
+
+### Como validar
+
+Execute na raiz deste repositório:
+
+```powershell
+git check-ignore k8s/common/secrets.yaml
+kubectl apply --dry-run=client -f k8s/common/secrets.example.yaml
+kubectl apply --dry-run=client -f k8s/common/configmap.yaml
+kubectl apply --dry-run=client -f k8s/rabbitmq/rabbitmq-deployment.yaml
+```
+
+O primeiro comando deve retornar o caminho do arquivo ignorado, e os manifests devem passar pela validação sem serem aplicados.
+
+Para o ambiente Docker completo, copie `docker/.env.example` para `docker/.env` e substitua os marcadores antes de executar o Compose.
+
+### Como manter
+
+- não versione valores reais em YAML, Docker Compose, scripts ou documentação;
+- mantenha LocalStack e endpoints locais restritos ao ambiente de desenvolvimento;
+- no EKS, use IAM Roles for Service Accounts ou EKS Pod Identity em vez de chaves estáticas;
+- use tags imutáveis do ECR, probes de saúde, limites de recursos e rolling update nos deployments;
+- a criação do overlay AWS/EKS, Ingress, ECR e serviços gerenciados pertence às próximas etapas desta branch.
+
 ## Descrição
 
 O **FCGInfra** é o repositório centralizado de infraestrutura da plataforma **FIAP Cloud Games (FCG)**. Ele contém as configurações e definições necessárias para executar toda a arquitetura de microsserviços em diferentes ambientes:
@@ -286,7 +332,7 @@ Para o roteiro completo de Swagger, criação de Admin, testes `401`/`403`/`200`
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
 | RabbitMQ Management UI | http://localhost:15672 | guest / guest |
-| SQL Server | localhost:1433 | sa / Your_strong!Passw0rd |
+| SQL Server | localhost:1433 | valores definidos em `docker/.env` |
 
 ---
 
@@ -299,13 +345,13 @@ Para o roteiro completo de Swagger, criação de Admin, testes `401`/`403`/`200`
 1. Server: `localhost,1433`
 2. Authentication: SQL Server Authentication
 3. Login: `sa`
-4. Password: `Your_strong!Passw0rd`
+4. Password: use o valor local de `FCG_SQL_PASSWORD`
 5. Trust server certificate: Yes
 
 #### Com sqlcmd (CLI):
 
 ```bash
-sqlcmd -S localhost,1433 -U sa -P "Your_strong!Passw0rd"
+sqlcmd -S localhost,1433 -U sa -P "SENHA_LOCAL"
 ```
 
 ### Banco de Dados
@@ -455,7 +501,7 @@ Arquivo: `k8s/common/secrets.yaml`
 
 ```yaml
 ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;[PASSWORD];TrustServerCertificate=True;"
-SA_PASSWORD: "Your_strong!Passw0rd"
+SA_PASSWORD: "${FCG_SQL_PASSWORD}"
 RabbitMQ__Host: "rabbitmq"
 RabbitMQ__Port: "5672"
 RabbitMQ__Username: "guest"

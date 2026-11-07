@@ -5,7 +5,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
     environment:
-      SA_PASSWORD: "Your_strong!Passw0rd"
+      SA_PASSWORD: "${FCG_SQL_PASSWORD:?Defina FCG_SQL_PASSWORD em docker/.env}"
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
@@ -23,8 +23,8 @@ services:
     image: mongo:7
     container_name: fcg-mongo
     environment:
-      MONGO_INITDB_ROOT_USERNAME: "admin"
-      MONGO_INITDB_ROOT_PASSWORD: "Your_strong!MongoPassw0rd"
+      MONGO_INITDB_ROOT_USERNAME: "${FCG_MONGO_USER:?Defina FCG_MONGO_USER em docker/.env}"
+      MONGO_INITDB_ROOT_PASSWORD: "${FCG_MONGO_PASSWORD:?Defina FCG_MONGO_PASSWORD em docker/.env}"
     ports:
       - "27018:27017"
     volumes:
@@ -44,8 +44,8 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: "${FCG_RABBITMQ_USER:?Defina FCG_RABBITMQ_USER em docker/.env}"
+      RABBITMQ_DEFAULT_PASS: "${FCG_RABBITMQ_PASSWORD:?Defina FCG_RABBITMQ_PASSWORD em docker/.env}"
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -84,12 +84,12 @@ services:
       - "80"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=Your_strong!Passw0rd;TrustServerCertificate=True;"
-      MongoSettings__ConnectionString: "mongodb://admin:Your_strong!MongoPassw0rd@mongo:27017/FiapCloudGames?authSource=admin"
+      ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=${FCG_SQL_PASSWORD};TrustServerCertificate=True;"
+      MongoSettings__ConnectionString: "mongodb://${FCG_MONGO_USER}:${FCG_MONGO_PASSWORD}@mongo:27017/FiapCloudGames?authSource=admin"
       MongoSettings__DatabaseName: "FiapCloudGames"
       RabbitMq__Host: rabbitmq
-      RabbitMq__User: guest
-      RabbitMq__Password: guest
+      RabbitMq__User: "${FCG_RABBITMQ_USER}"
+      RabbitMq__Password: "${FCG_RABBITMQ_PASSWORD}"
       RabbitMq__OrderQueueName: order-placed
       RabbitMq__PaymentProcessQueueName: payment-processed
       Redis__ConnectionString: "redis:6379"
@@ -118,7 +118,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8070
-      ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=Your_strong!Passw0rd;TrustServerCertificate=True;"
+      ConnectionStrings__ConnectionString: "Server=db,1433;Initial Catalog=FiapCloudGames;User Id=sa;Password=${FCG_SQL_PASSWORD};TrustServerCertificate=True;"
       AWS__Region: us-east-1
       AWS__ServiceUrl: http://localstack:4566
       AWS_ACCESS_KEY_ID: test
@@ -131,8 +131,8 @@ services:
       NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED: "true"
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Port: "5672"
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
+      RabbitMQ__Username: "${FCG_RABBITMQ_USER}"
+      RabbitMQ__Password: "${FCG_RABBITMQ_PASSWORD}"
       RabbitMQ__QueueName: user-created
 
   paymentsapi:
@@ -156,8 +156,8 @@ services:
       ASPNETCORE_URLS: http://+:8090
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Port: "5672"
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
+      RabbitMQ__Username: "${FCG_RABBITMQ_USER}"
+      RabbitMQ__Password: "${FCG_RABBITMQ_PASSWORD}"
       AWS__Region: us-east-1
       AWS__ServiceUrl: http://localstack:4566
       AWS__PaymentNotificationQueue: notification-payment-processed

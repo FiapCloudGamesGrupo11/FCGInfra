@@ -23,9 +23,15 @@ spec:
 
         env:
         - name: RABBITMQ_DEFAULT_USER
-          value: "guest"
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: RabbitMQ__Username
         - name: RABBITMQ_DEFAULT_PASS
-          value: "guest"
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: RabbitMQ__Password
 
         ports:
         - containerPort: 5672

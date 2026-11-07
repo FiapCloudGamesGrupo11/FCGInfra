@@ -161,7 +161,7 @@ docker exec -it sqlserver `
   /opt/mssql-tools18/bin/sqlcmd `
   -S localhost `
   -U sa `
-  -P "Your_strong!Passw0rd" `
+  -P "SENHA_LOCAL" `
   -C `
   -d FiapCloudGames `
   -Q "UPDATE dbo.Users SET Role = 1, Status = 1 WHERE Email = 'admin.gateway@test.com'; SELECT Id, Name, Email, Role, Status FROM dbo.Users WHERE Email = 'admin.gateway@test.com';"
@@ -204,7 +204,7 @@ docker exec -it sqlserver `
   /opt/mssql-tools18/bin/sqlcmd `
   -S localhost `
   -U sa `
-  -P "Your_strong!Passw0rd" `
+  -P "SENHA_LOCAL" `
   -C `
   -d FiapCloudGames `
   -Q "SELECT Id, Name, LastName, Email, Role, Status, CreatedAt FROM dbo.Users;"
