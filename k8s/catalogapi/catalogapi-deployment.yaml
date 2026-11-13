@@ -16,6 +16,9 @@ spec:
         app: catalog-api
   
     spec:
+      nodeSelector:
+        eks.amazonaws.com/compute-type: auto
+
       containers:
       - name: catalog-api
         image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-catalog:1.0.0
@@ -40,6 +43,13 @@ spec:
           failureThreshold: 3
           initialDelaySeconds: 20
 
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 30
+
         readinessProbe:
           httpGet:
             path: /health
@@ -58,6 +68,12 @@ spec:
         env:
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
+
+        - name: RabbitMQ__User
+          valueFrom:
+            secretKeyRef:
+              name: secretfcg
+              key: RabbitMQ__Username
 
         - name: NEW_RELIC_APP_NAME
           value: "FCG-CatalogAPI"
