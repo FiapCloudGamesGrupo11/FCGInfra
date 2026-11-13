@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: catalog-api
-        image: fiapcloudgames:latest
+        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-catalog:1.0.0
         imagePullPolicy: IfNotPresent
     
         ports:
@@ -61,12 +61,6 @@ spec:
 
         - name: NEW_RELIC_APP_NAME
           value: "FCG-CatalogAPI"
-
-        - name: NEW_RELIC_LICENSE_KEY
-          valueFrom:
-            secretKeyRef:
-              name: newrelic-secret
-              key: license-key
 
         - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
           value: "true"
