@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-api
+  name: fcg-user
 
 spec:
   replicas: 1
 
   selector:
     matchLabels:
-      app: user-api
+      app: fcg-user
 
   template:
     metadata:
       labels:
-        app: user-api
+        app: fcg-user
 
     spec:
       nodeSelector:
         eks.amazonaws.com/compute-type: auto
 
       containers:
-        - name: user-api
-          image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-user:1.0.1
+        - name: fcg-user
+          image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-user:1.0.0
           imagePullPolicy: IfNotPresent
 
           ports:
