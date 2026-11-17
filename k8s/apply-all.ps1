@@ -3,6 +3,7 @@ param([switch]$SkipBuild)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $composeFile = Join-Path $PSScriptRoot "../docker/docker-compose.yml"
+$localSecretsFile = Join-Path $PSScriptRoot "common/secrets.yaml"
 
 function Invoke-Checked {
     param([string]$Command, [string[]]$Arguments)
@@ -18,6 +19,10 @@ if ($LASTEXITCODE -ne 0 -or $contextName.Trim() -ne "docker-desktop") {
 
 if ([string]::IsNullOrWhiteSpace($env:NEW_RELIC_LICENSE_KEY)) {
     throw "Defina a variável NEW_RELIC_LICENSE_KEY antes de executar o script."
+}
+
+if (-not (Test-Path -LiteralPath $localSecretsFile)) {
+    throw "Crie k8s/common/secrets.yaml a partir de secrets.example.yaml e preencha os valores locais. O arquivo é ignorado pelo Git."
 }
 
 if (-not $SkipBuild) {
@@ -57,7 +62,7 @@ foreach ($manifest in @(
     "rabbitmq/rabbitmq-deployment.yaml", "rabbitmq/rabbitmq-service.yaml",
     "mongo/mongo-deployment.yaml", "mongo/mongo-service.yaml",
     "sqlserver/sqlserver-deployment.yaml", "sqlserver/sqlserver-service.yaml",
-    "redis/redis.yaml", "payment/payment-data.yaml"
+    "redis/redis.yaml", "opensearch/opensearch-deployment.yaml", "payment/payment-data.yaml"
 )) {
     Invoke-Checked kubectl @("apply", "-f", $manifest)
 }
@@ -76,7 +81,7 @@ foreach ($manifest in @(
 }
 
 # Reload rebuilt local images even when their tags have not changed.
-foreach ($deployment in @("user-api", "catalog-api", "payments-api", "kong")) {
+foreach ($deployment in @("fcg-user", "catalog-api", "payments-api", "kong")) {
     Invoke-Checked kubectl @("rollout", "restart", "deployment/$deployment")
     Invoke-Checked kubectl @("rollout", "status", "deployment/$deployment", "--timeout=180s")
 }

@@ -16,9 +16,12 @@ spec:
         app: catalog-api
   
     spec:
+      nodeSelector:
+        eks.amazonaws.com/compute-type: auto
+
       containers:
       - name: catalog-api
-        image: fiapcloudgames:latest
+        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-catalog@sha256:749277cc8c304763a7b547d2e26ae388a10e19486ccf6c8f3da9bf61aa19d1c5
         imagePullPolicy: IfNotPresent
     
         ports:
@@ -26,11 +29,11 @@ spec:
 
         resources:
           requests:
-            cpu: "50m"
-            memory: "64Mi"
+            cpu: 100m
+            memory: 128Mi
           limits:
-            cpu: "250m"
-            memory: "256Mi"
+            cpu: 500m
+            memory: 512Mi
 
         livenessProbe:
           httpGet:
@@ -39,6 +42,13 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
           initialDelaySeconds: 20
+
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 30
 
         readinessProbe:
           httpGet:
@@ -59,14 +69,14 @@ spec:
         - name: ASPNETCORE_URLS
           value: "http://+:8080"
 
-        - name: NEW_RELIC_APP_NAME
-          value: "FCG-CatalogAPI"
-
-        - name: NEW_RELIC_LICENSE_KEY
+        - name: RabbitMQ__User
           valueFrom:
             secretKeyRef:
-              name: newrelic-secret
-              key: license-key
+              name: secretfcg
+              key: RabbitMQ__Username
+
+        - name: NEW_RELIC_APP_NAME
+          value: "FCG-CatalogAPI"
 
         - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
           value: "true"

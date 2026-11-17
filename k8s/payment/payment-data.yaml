@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: payment-data
 spec:
+  storageClassName: auto-ebs-sc
   accessModes:
     - ReadWriteOnce
   resources:

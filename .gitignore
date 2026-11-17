@@ -485,3 +485,4 @@ $RECYCLE.BIN/
 .env
 docker/.env
 docker/localstack/volume/
+k8s/common/secrets.yaml
