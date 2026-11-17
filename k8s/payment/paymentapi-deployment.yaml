@@ -33,7 +33,7 @@ spec:
 
       containers:
       - name: payments-api
-        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-payments:1.0.0
+        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-payments@sha256:3d1604692209cba671d20465b9e0e140f786c44b8cf69b924eded404ea78e4bc
         imagePullPolicy: IfNotPresent
 
         volumeMounts:

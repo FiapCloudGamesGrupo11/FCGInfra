@@ -16,12 +16,14 @@ spec:
         app: fcg-user
 
     spec:
+      serviceAccountName: fcg-user-sa
+
       nodeSelector:
         eks.amazonaws.com/compute-type: auto
 
       containers:
         - name: fcg-user
-          image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-user:1.0.0
+          image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-user@sha256:bc6bf7193e346e8e6e4121e9814c9c8bad070d19e47cb865321bdce6282d0e4e
           imagePullPolicy: IfNotPresent
 
           ports:

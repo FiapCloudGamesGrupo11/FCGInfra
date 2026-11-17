@@ -21,7 +21,7 @@ spec:
 
       containers:
       - name: catalog-api
-        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-catalog:1.0.0
+        image: 432342421632.dkr.ecr.us-east-1.amazonaws.com/fcg-catalog@sha256:749277cc8c304763a7b547d2e26ae388a10e19486ccf6c8f3da9bf61aa19d1c5
         imagePullPolicy: IfNotPresent
     
         ports:

@@ -10,7 +10,7 @@ data:
 
     services:
       - name: user-api
-        url: http://user-api:8070
+        url: http://fcg-user:8070
         routes:
           - name: user-public-routes
             paths:

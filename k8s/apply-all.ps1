@@ -81,7 +81,7 @@ foreach ($manifest in @(
 }
 
 # Reload rebuilt local images even when their tags have not changed.
-foreach ($deployment in @("user-api", "catalog-api", "payments-api", "kong")) {
+foreach ($deployment in @("fcg-user", "catalog-api", "payments-api", "kong")) {
     Invoke-Checked kubectl @("rollout", "restart", "deployment/$deployment")
     Invoke-Checked kubectl @("rollout", "status", "deployment/$deployment", "--timeout=180s")
 }

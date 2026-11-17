@@ -68,8 +68,8 @@ ainda precisa ser concluído para a entrega acadêmica.
 - Remover `k8s/common/secrets.yaml` do versionamento e rotacionar os valores que
   já tenham sido expostos.
 - Integrar AWS Secrets Manager por External Secrets Operator ou Secrets Store CSI.
-- Criar ServiceAccounts dedicados e associações EKS Pod Identity para UsersAPI e
-  CatalogAPI.
+- Manter as associações EKS Pod Identity de `fcg-user-sa` e `payments-api-sa` e
+  criar uma identidade dedicada para o CatalogAPI quando ele acessar serviços AWS.
 - Confirmar a revogação da Access Key exposta durante a configuração do ambiente.
 
 ### P0 - Serviços AWS gerenciados
@@ -163,4 +163,3 @@ Use `127.0.0.1,15433` no SSMS e mantenha o terminal do port-forward aberto.
   com SQS/Outbox ser concluída.
 - O ambiente atual comprova a fundação técnica, mas ainda não comprova exposição
   externa, serviços gerenciados, GitOps e zero downtime exigidos pela Fase 4.
-
