@@ -16,14 +16,40 @@ spec:
         app: kong
 
     spec:
+      nodeSelector:
+        eks.amazonaws.com/compute-type: auto
+
       containers:
       - name: kong
         image: kong:3.9
         imagePullPolicy: IfNotPresent
 
         ports:
-        - containerPort: 8000
-        - containerPort: 8001
+        - name: proxy
+          containerPort: 8000
+        - name: admin
+          containerPort: 8001
+
+        startupProbe:
+          httpGet:
+            path: /status
+            port: admin
+          periodSeconds: 5
+          failureThreshold: 30
+
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: admin
+          periodSeconds: 10
+          failureThreshold: 3
+
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: admin
+          periodSeconds: 20
+          failureThreshold: 3
 
         resources:
           requests:
